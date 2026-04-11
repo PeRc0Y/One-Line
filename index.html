@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>one idea. — daily quote</title>
+  <title>one line. — a powerful idea, every day</title>
+  <meta name="description" content="One powerful idea, every day. No noise. No feed. Just one line." />
+  <meta property="og:title" content="one line." />
+  <meta property="og:description" content="We remove noise and deliver one powerful idea at a time." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="one line." />
+  <meta name="twitter:description" content="One powerful idea, every day." />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,7 +39,7 @@
       flex-direction: column;
     }
 
-    /* ── Quote wrap — merkeze göre biraz yukarı ── */
+    /* ── Quote wrap — merkeze göre yukarı ── */
     .quote-wrap {
       position: absolute;
       inset: 0;
@@ -40,7 +47,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding-bottom: 10vh; /* alt barı hesaba katarak yukarı iter */
+      padding-bottom: 18vh;
       z-index: 10;
     }
 
@@ -72,7 +79,8 @@
       transform: scaleX(0);
     }
     .reveal-row {
-      height: clamp(20px, 3vw, 26px);
+      height: auto;
+      min-height: clamp(20px, 3vw, 26px);
       margin-bottom: clamp(2px, 0.4vw, 4px);
       display: flex;
       align-items: center;
@@ -82,6 +90,7 @@
       font-weight: 700;
       color: #1a1a1a;
       letter-spacing: -0.3px;
+      line-height: 1.55;
       opacity: 0;
     }
 
@@ -112,16 +121,25 @@
       animation: fadeUp 0.5s ease forwards;
     }
 
-    /* ── Bottom zone ── */
+    /* ── Bottom zone — sadece action bar ── */
     .bottom {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
+      position: fixed;
+      bottom: 88px; left: 0; right: 0;
       z-index: 20;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 0 20px;
-      gap: 16px;
+      gap: 20px;
+    }
+
+    /* ── Branding — bottom ile birlikte gelir ── */
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      text-align: center;
+      padding: 10px 24px 20px;
     }
 
     /* ── Floating action bar ── */
@@ -188,8 +206,8 @@
     .remind-wrap { position: relative; }
 
     .remind-pop {
-      position: absolute;
-      bottom: calc(100% + 16px);
+      position: fixed;
+      bottom: 110px;
       left: 50%;
       transform: translateX(-50%) translateY(6px);
       opacity: 0;
@@ -262,14 +280,6 @@
       line-height: 1.5;
     }
 
-    /* ── Branding ── */
-    .branding {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      text-align: center;
-    }
     .brand-name {
       font-size: 10px; font-weight: 700;
       letter-spacing: 0.28em;
@@ -303,14 +313,16 @@
     @media (max-width: 600px) {
       .iBtn { padding: 8px 14px; font-size: 8px; }
       .iBtn svg { width: 14px; height: 14px; }
-      .brand-tag { display: none; }
-      .quote-wrap { padding-bottom: 8vh; }
-      .bottom { padding-bottom: 16px; gap: 12px; }
+      .brand-tag { font-size: 7px; }
+      .quote-wrap { padding-bottom: 20vh; }
+      .bottom { bottom: 76px; }
+      .branding { padding: 8px 16px 14px; }
     }
 
     /* ── Tablet ── */
     @media (max-width: 900px) and (min-width: 601px) {
-      .quote-wrap { padding-bottom: 9vh; }
+      .quote-wrap { padding-bottom: 19vh; }
+      .bottom { bottom: 82px; }
     }
   </style>
 </head>
@@ -380,9 +392,9 @@
 
     </div>
 
-    <!-- Branding -->
+    <!-- Branding — butonlarla birlikte gelir -->
     <div class="branding">
-      <span class="brand-name">one idea.</span>
+      <span class="brand-name">one line.</span>
       <span class="brand-tag">We remove noise and deliver one powerful idea at a time.</span>
     </div>
 
