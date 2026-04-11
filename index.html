@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>one idea. — daily quote</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:    #FAF9F6;
+      --red:   #CC2200;
+      --ink:   #1A1A1A;
+      --muted: rgba(26,26,26,0.32);
+      --bar-h: 18px;
+      --gap:   6px;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    /* ── Full-screen canvas ── */
+    .canvas {
+      position: fixed; inset: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Quote wrap — merkeze göre biraz yukarı ── */
+    .quote-wrap {
+      position: absolute;
+      inset: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 10vh; /* alt barı hesaba katarak yukarı iter */
+      z-index: 10;
+    }
+
+    /* ── Poster 4 ── */
+    .poster-4 {
+      background: var(--bg);
+      width: min(480px, 90vw);
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(28px, 5vw, 52px) clamp(24px, 5vw, 48px);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .row {
+      height: clamp(14px, 2.2vw, 22px);
+      margin-bottom: clamp(2px, 0.4vw, 4px);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .row .bar-inner {
+      position: absolute;
+      inset: 2px -6px;
+      background: #CC2200;
+      border-radius: 1px;
+      transform-origin: left center;
+      transform: scaleX(0);
+    }
+    .reveal-row {
+      height: clamp(20px, 3vw, 26px);
+      margin-bottom: clamp(2px, 0.4vw, 4px);
+      display: flex;
+      align-items: center;
+    }
+    .reveal-row span {
+      font-size: clamp(13px, 1.6vw, 17px);
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: -0.3px;
+      opacity: 0;
+    }
+
+    /* ── Giriş animasyonları ── */
+    @keyframes barSweep {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .bar-inner.animate {
+      animation: barSweep 0.42s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    .reveal-row span.animate {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    .bottom {
+      opacity: 0;
+    }
+    .bottom.animate {
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    /* ── Bottom zone ── */
+    .bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 20px;
+      gap: 16px;
+    }
+
+    /* ── Floating action bar ── */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(26,26,26,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 100px;
+      padding: 6px 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Icon button */
+    .iBtn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.72);
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 80px;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.18s, color 0.18s, transform 0.15s;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .iBtn:hover {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .iBtn.active {
+      background: #fff;
+      color: var(--ink);
+    }
+    .iBtn svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none;
+      stroke-width: 1.75;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .iBtn.active svg { stroke: var(--ink); }
+
+    /* Pill divider */
+    .bar-sep {
+      width: 1px; height: 24px;
+      background: rgba(255,255,255,0.1);
+      flex-shrink: 0;
+      margin: 0 2px;
+    }
+
+    /* ── Remind popover ── */
+    .remind-wrap { position: relative; }
+
+    .remind-pop {
+      position: absolute;
+      bottom: calc(100% + 16px);
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      opacity: 0;
+      pointer-events: none;
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 100;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    /* caret */
+    .remind-pop::after {
+      content: '';
+      position: absolute;
+      bottom: -6px; left: 50%;
+      transform: translateX(-50%);
+      width: 12px; height: 12px;
+      background: #fff;
+      rotate: 45deg;
+      border-radius: 2px;
+    }
+    .remind-pop.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .remind-pop-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--ink);
+      letter-spacing: 0.04em;
+    }
+    .remind-input-row {
+      display: flex;
+      gap: 6px;
+    }
+    .remind-pop input {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      border: 1.5px solid rgba(26,26,26,0.12);
+      background: #F7F6F3;
+      color: var(--ink);
+      padding: 10px 12px;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .remind-pop input::placeholder { color: var(--muted); }
+    .remind-pop input:focus { border-color: var(--ink); background: #fff; }
+    .remind-go {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; font-weight: 700;
+      background: var(--ink); color: #fff;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .remind-go:hover { opacity: 0.8; transform: scale(0.97); }
+    .remind-note {
+      font-size: 10px; color: var(--muted);
+      text-align: center; letter-spacing: 0.02em;
+      line-height: 1.5;
+    }
+
+    /* ── Branding ── */
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      text-align: center;
+    }
+    .brand-name {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .brand-tag {
+      font-size: clamp(7px, 0.75vw, 8.5px);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 130px; left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: var(--ink); color: var(--bg);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 10px 22px; border-radius: 100px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s, transform 0.22s;
+      z-index: 200;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .iBtn { padding: 8px 14px; font-size: 8px; }
+      .iBtn svg { width: 14px; height: 14px; }
+      .brand-tag { display: none; }
+      .quote-wrap { padding-bottom: 8vh; }
+      .bottom { padding-bottom: 16px; gap: 12px; }
+    }
+
+    /* ── Tablet ── */
+    @media (max-width: 900px) and (min-width: 601px) {
+      .quote-wrap { padding-bottom: 9vh; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="canvas">
+
+  <!-- Poster 4 — dead center, untouched -->
+  <div class="quote-wrap">
+    <div class="poster-4">
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="reveal-row"><span id="quoteText">You don't need motivation.</span></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+      <div class="row"><div class="bar-inner"></div></div>
+    </div>
+  </div>
+
+  <!-- Bottom: floating action bar → branding -->
+  <div class="bottom">
+
+    <!-- Floating pill -->
+    <div class="action-bar">
+
+      <!-- Keep -->
+      <button class="iBtn" id="keepBtn" onclick="handleKeep()">
+        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        Keep
+      </button>
+
+      <div class="bar-sep"></div>
+
+      <!-- Share -->
+      <button class="iBtn" onclick="handleShare()">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share
+      </button>
+
+      <div class="bar-sep"></div>
+
+      <!-- Remind Me -->
+      <div class="remind-wrap">
+        <button class="iBtn" id="remindBtn" onclick="toggleRemind()">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Remind me
+        </button>
+        <div class="remind-pop" id="remindPop">
+          <span class="remind-pop-label">Daily reminder</span>
+          <div class="remind-input-row">
+            <input type="email" id="emailInput" placeholder="your@email.com" />
+            <button class="remind-go" onclick="handleRemind()">→</button>
+          </div>
+          <p class="remind-note">One quote every morning.<br>Unsubscribe anytime.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Branding -->
+    <div class="branding">
+      <span class="brand-name">one idea.</span>
+      <span class="brand-tag">We remove noise and deliver one powerful idea at a time.</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">Link copied</div>
+
+<script>
+
+  // ── Config ───────────────────────────────────
+  const FORMSPREE_ID = 'YOUR_FORM_ID'; // → formspree.io/f/YOUR_FORM_ID
+
+  // ── Daily quote from quotes.json ─────────────
+  async function loadQuote() {
+    try {
+      const res  = await fetch('quotes.json');
+      const list = await res.json();
+
+      // Bugünün tarihine göre deterministik index (herkes aynı quote'u görür)
+      const now   = new Date();
+      const start = new Date(now.getFullYear(), 0, 0);
+      const diff  = now - start;
+      const oneDay = 1000 * 60 * 60 * 24;
+      const dayOfYear = Math.floor(diff / oneDay);
+      const idx   = dayOfYear % list.length;
+
+      document.getElementById('quoteText').textContent = list[idx];
+    } catch (e) {
+      // Fallback — fetch çalışmazsa (file:// protokolü gibi)
+      console.warn('quotes.json yüklenemedi, varsayılan kullanılıyor.');
+    }
+  }
+
+  // ── Intro animation ──────────────────────────
+  async function init() {
+    await loadQuote(); // önce quote yükle, sonra animasyon başlasın
+
+    const bars   = document.querySelectorAll('.bar-inner');
+    const quote  = document.querySelector('.reveal-row span');
+    const bottom = document.querySelector('.bottom');
+
+    const STAGGER    = 90;
+    const QUOTE_GAP  = 220;
+    const BOTTOM_GAP = 360;
+
+    bars.forEach((bar, i) => {
+      setTimeout(() => bar.classList.add('animate'), i * STAGGER);
+    });
+
+    const quoteStart = bars.length * STAGGER + QUOTE_GAP;
+    setTimeout(() => quote.classList.add('animate'), quoteStart);
+    setTimeout(() => bottom.classList.add('animate'), quoteStart + BOTTOM_GAP);
+  }
+
+  init();
+
+  // ── Keep ─────────────────────────────────────
+  let kept = false;
+  function handleKeep() {
+    kept = !kept;
+    document.getElementById('keepBtn').classList.toggle('active', kept);
+  }
+
+  // ── Share ─────────────────────────────────────
+  function handleShare() {
+    const q   = document.getElementById('quoteText').textContent;
+    const txt = `"${q}" — one idea.`;
+    navigator.clipboard ? navigator.clipboard.writeText(txt).then(showToast) : showToast();
+  }
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ── Remind Me → Formspree ────────────────────
+  let remindOpen = false;
+
+  function toggleRemind() {
+    remindOpen = !remindOpen;
+    document.getElementById('remindPop').classList.toggle('open', remindOpen);
+    document.getElementById('remindBtn').classList.toggle('active', remindOpen);
+    if (remindOpen) setTimeout(() => document.getElementById('emailInput').focus(), 200);
+  }
+
+  async function handleRemind() {
+    const input = document.getElementById('emailInput');
+    const email = input.value.trim();
+    if (!email || !email.includes('@')) { input.focus(); input.style.borderColor='#CC2200'; return; }
+    input.style.borderColor = '';
+
+    const pop = document.getElementById('remindPop');
+
+    // Formspree ID girilmemişse local demo modu
+    if (FORMSPREE_ID === 'YOUR_FORM_ID') {
+      showSuccess(pop);
+      return;
+    }
+
+    // Gerçek Formspree isteği
+    try {
+      const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body:    JSON.stringify({ email, _subject: 'one idea. — new subscriber' })
+      });
+
+      if (res.ok) {
+        showSuccess(pop);
+      } else {
+        pop.innerHTML = `<p style="font-size:11px;text-align:center;color:#CC2200;padding:8px 0">Bir hata oluştu. Tekrar dene.</p>`;
+      }
+    } catch {
+      pop.innerHTML = `<p style="font-size:11px;text-align:center;color:#CC2200;padding:8px 0">Bağlantı hatası.</p>`;
+    }
+  }
+
+  function showSuccess(pop) {
+    pop.innerHTML = `<p style="font-size:13px;text-align:center;color:var(--ink);padding:12px 0;font-weight:600;letter-spacing:0.02em">✓ See you tomorrow.</p>`;
+    setTimeout(() => {
+      remindOpen = false;
+      document.getElementById('remindBtn').classList.remove('active');
+    }, 1800);
+  }
+
+  document.addEventListener('click', e => {
+    const w = document.querySelector('.remind-wrap');
+    if (remindOpen && !w.contains(e.target)) {
+      remindOpen = false;
+      document.getElementById('remindPop').classList.remove('open');
+      document.getElementById('remindBtn').classList.remove('active');
+    }
+  });
+
+</script>
+</body>
+</html>
